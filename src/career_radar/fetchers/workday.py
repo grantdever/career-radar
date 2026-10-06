@@ -1,4 +1,4 @@
-"""Fetcher for Workday cxs job boards (validated against University of Rochester).
+"""Fetcher for Workday cxs job boards (validated against a live university tenant).
 
 Listing endpoint: POST https://{host}/wday/cxs/{tenant}/{site}/jobs
 Detail endpoint:  GET  https://{host}/wday/cxs/{tenant}/{site}{externalPath}

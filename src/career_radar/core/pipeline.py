@@ -7,7 +7,7 @@ Run from the repo root:
 Every run pages each employer's full listing (the listing endpoints can't
 server-side filter by date or keyword, and paging is cheap), but only
 never-before-seen postings that also pass the deterministic pre-filter
-(src/prefilter.py) get a detail fetch and an LLM score. Irrelevant postings
+(core/prefilter.py) get a detail fetch and an LLM score. Irrelevant postings
 are never stored, so the DB holds only plausibly-relevant rows.
 """
 
