@@ -1,0 +1,93 @@
+# Decision-model scorer config for a SYNTHETIC persona (not a real person).
+#
+# Persona: a backend engineer with ~6 years of Python and Go, building APIs,
+# distributed systems and internal platforms. Wants remote (US) or New York
+# roles, mid-to-senior IC level. Not interested in frontend-only, sales,
+# people management, security-clearance jobs, or crypto/gambling products.
+#
+# Copy to ~/.config/career-radar/decision.yaml and set `scorer: decision` in
+# filters.yaml. Every name the fold references is checked when this file
+# loads, so a typo fails before any paid call.
+
+transport:
+  # Any decision model on OpenRouter's Decisions API (needs OPENROUTER_API_KEY).
+  kind: openrouter-decisions
+  model: typesafe/jev-1.13-20260917
+  # Same questions on a chat model instead (answers marked calibrated: false):
+  #   kind: llm-structured
+  #   model: gemini/gemini-2.5-flash
+  # Offline and free, for trying the pipeline:
+  #   kind: mock
+
+state:
+  fields: [title, employer, location, remote_type, salary, description]
+  include_criteria: true   # send criteria.md along with each posting
+
+questions:
+  domain:
+    type: score
+    levels: 4
+    instructions: >-
+      How close is this job's technical area to backend and platform
+      engineering (APIs, services, distributed systems, databases)? Judge the
+      area of work only, not seniority or the employer.
+    criteria:
+      - what: Not an engineering job
+        examples: [Account Executive, Technical Recruiter, Marketing Manager]
+        not_for: Sales engineers and solutions engineers who write code still count as engineering.
+      - what: Engineering, but a different area
+        examples: [Frontend Engineer (React), iOS Engineer, Manual QA Analyst, Product Designer]
+      - what: Adjacent engineering area
+        examples: [Data Engineer building pipelines, Site Reliability Engineer, ML Infrastructure Engineer, Full-stack Engineer]
+      - what: Core backend or platform engineering
+        examples: [Backend Engineer building APIs in Go, Platform Engineer for internal services, Distributed Systems Engineer]
+  work:
+    type: score
+    levels: 4
+    instructions: >-
+      How much of the day-to-day is designing and writing software, as
+      opposed to support, operations, meetings or selling?
+    criteria:
+      - what: No hands-on building
+        examples: [Engineering Manager with no coding, Sales role, Recruiting]
+      - what: Mostly support, tickets or operations
+        examples: [Support Engineer triaging tickets, NOC operator]
+      - what: Mixed building and other duties
+        examples: [Solutions Engineer splitting demos and integration code, Tech lead with heavy coordination]
+      - what: Mostly design and code
+        examples: [Engineer designing and shipping services, Engineer owning a platform end to end]
+  seniority:
+    type: choice
+    instructions: >-
+      Compare the stated requirements with ~6 years of professional backend
+      experience. Judge requirements, not title words alone.
+    options:
+      in_range: Mid to senior IC; asks for roughly 3-8 years.
+      stretch: Staff or principal IC; asks for 8-12 years or org-wide scope.
+      out: Director, VP or people-management track, or intern / new-grad roles.
+  org_fit:
+    type: choice
+    instructions: Would this employer suit someone who likes developer-facing, infrastructure or B2B software companies?
+    options:
+      good: Developer tools, infrastructure, open source, B2B SaaS.
+      neutral: Everything else.
+  hard_veto:
+    type: noul
+    instructions: >-
+      Does this role require something the candidate rules out: an active
+      security clearance, on-site work outside New York, a crypto or gambling
+      product as the core business, or round-the-clock pager duty as the
+      main job?
+
+fold:
+  # domain + work (0..6) -> base score
+  base: {sum: [domain, work], table: [1, 2, 3, 4, 6, 7, 9]}
+  adjust:
+    - {if: {org_fit: good}, add: 1}
+  clamp:
+    - {if: {seniority: stretch}, max: 8, flag: stretch}
+    - {if: {seniority: out}, max: 3}
+    - {if: {hard_veto: ">=0.5"}, max: 2, flag: hard-veto}
+  confidence: {min: 0.55, flag: low-confidence}
+
+surface_cutoff: 8

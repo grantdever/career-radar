@@ -514,7 +514,7 @@ def run_pipeline(
 ) -> None:
     import os
 
-    from career_radar.config import get_config_dir, load_employers
+    from career_radar.config import get_config_dir, get_output_dir, load_employers, load_scorer
     from career_radar.core import dedupe
 
     cfg_dir = get_config_dir(config_dir)
@@ -538,7 +538,7 @@ def run_pipeline(
 
     employers = load_employers(config_dir=cfg_dir)
     target_db = Path(db_path) if db_path else dedupe.DB_PATH
-    out_dir = Path(output_dir) if output_dir else (Path.home() / ".local" / "share" / "career-radar" / "output")
+    out_dir = get_output_dir(output_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
 
     conn = dedupe.connect(target_db)
@@ -569,7 +569,14 @@ def run_pipeline(
                 logger.warning("Unknown ATS type %r for %s", ats, emp.get("name"))
 
         if not skip_score:
-            score.score_unscored(conn, cfg_dir / "criteria.md", config_dir=cfg_dir)
+            scorer = load_scorer(config_dir=cfg_dir)
+            if scorer == "decision":
+                from career_radar.core import decision
+                # Loads and validates decision.yaml first: a broken config
+                # raises here, before any paid call, instead of falling back.
+                decision.score_unscored(conn, cfg_dir, cfg_dir / "criteria.md")
+            else:
+                score.score_unscored(conn, cfg_dir / "criteria.md", config_dir=cfg_dir)
 
         report.write_shortlist(conn, out_dir, today.isoformat())
     finally:
