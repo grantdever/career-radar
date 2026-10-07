@@ -155,7 +155,7 @@ def extract_req_id(listing: dict) -> str:
 
     Scans bulletFields for the first token shaped like a req ID (R12345,
     JR102757, R-40937, REQ_232113), then falls back to the first bullet or the
-    externalPath. Never key on position — RRH's index 0 is a location.
+    externalPath. Never key on position — some tenants put a location at index 0.
     """
     bullets = listing.get("bulletFields") or []
     for b in bullets:
