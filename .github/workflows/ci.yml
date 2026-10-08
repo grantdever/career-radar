@@ -32,5 +32,9 @@ jobs:
         ruff check src/ tests/
 
     - name: Run tests with pytest
+      env:
+        # Maintainer-specific privacy guard terms (comma-separated repo secret;
+        # empty on forks, where the guard falls back to the public list).
+        PRIVATE_TERMS: ${{ secrets.PRIVATE_TERMS }}
       run: |
         pytest -v
