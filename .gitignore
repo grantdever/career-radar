@@ -8,3 +8,6 @@ build/
 *.egg-info/
 .pytest_cache/
 .ruff_cache/
+
+# Maintainer-specific privacy guard terms (never commit)
+.private-terms

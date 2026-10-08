@@ -9,8 +9,8 @@ HOURLY_ANNUALIZATION = 2080  # hourly ranges are annualized for comparability
 HOURLY_THRESHOLD = 500  # a "salary" number below this is assumed to be per-hour
 
 # Workday req IDs take several forms (R12345, JR102757, R-40937, R0291673,
-# REQ_232113) and bulletFields[0] is NOT always the req ID — Rochester
-# Regional Health puts location first and the ID at index 2. Detect the ID by
+# REQ_232113) and bulletFields[0] is NOT always the req ID — some
+# tenants put location first and the ID at index 2. Detect the ID by
 # shape instead of position.
 _REQ_ID_RE = re.compile(r"^(?:REQ_|JR|R-?)\d")
 
@@ -155,7 +155,7 @@ def extract_req_id(listing: dict) -> str:
 
     Scans bulletFields for the first token shaped like a req ID (R12345,
     JR102757, R-40937, REQ_232113), then falls back to the first bullet or the
-    externalPath. Never key on position — RRH's index 0 is a location.
+    externalPath. Never key on position — some tenants put a location at index 0.
     """
     bullets = listing.get("bulletFields") or []
     for b in bullets:

@@ -5,9 +5,9 @@
     Interested / apply               -> the running list of "yes" postings
     Borderline (5-6)                 -> calibration material for criteria.md
 
-`not_interested` postings never appear. This file is the daily artifact (and
-what Cowork will read in phase 4); src/review.py is the interactive surface
-that actually records verdicts.
+`not_interested` postings never appear. This file is the daily artifact; the
+`career-radar review` command is the interactive surface that actually
+records verdicts.
 """
 
 import json

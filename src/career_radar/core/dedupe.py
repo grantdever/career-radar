@@ -80,13 +80,13 @@ NEW = "new"
 SURFACED = "surfaced"
 INTERESTED = "interested"
 NOT_INTERESTED = "not_interested"
-# Retired by a later tightening of src/prefilter.py: the posting was stored
+# Retired by a later tightening of core/prefilter.py: the posting was stored
 # under an older, looser rule set and no longer qualifies. Distinct from
-# NOT_INTERESTED so it never pollutes the precision stat — Grant did not
+# NOT_INTERESTED so it never pollutes the precision stat — the user did not
 # reject these, the filter did. See retire_filtered().
 FILTERED = "filtered"
 
-# Application-tracking stages for `interested` postings (src/tracker.py).
+# Application-tracking stages for `interested` postings.
 # `status` still gates what the tracker shows; `app_status` records what
 # happened after the interested verdict. The column defaults to TO_APPLY
 # (ALTER TABLE backfills old rows), so it is never NULL. app_updated_at is
@@ -249,7 +249,7 @@ def record_score(
 # --- Review lifecycle -------------------------------------------------------
 
 def mark_surfaced(conn: sqlite3.Connection, source: str, req_id: str, today: str) -> None:
-    """Mark a still-new posting as shown to Grant (never demotes a verdict)."""
+    """Mark a still-new posting as shown to the user (never demotes a verdict)."""
     conn.execute(
         """UPDATE postings
            SET surfaced_at = COALESCE(surfaced_at, ?), status = ?
