@@ -80,3 +80,25 @@ def test_verdict_lifecycle(tmp_path):
     stats = dedupe.review_stats(conn)
     assert stats["interested"] == 1
     assert stats["not_interested"] == 0
+
+
+def test_fuzzy_duplicate_fast_paths_match_full_computation():
+    """The title early-exit and quick_ratio bound must not change any verdict."""
+    import difflib
+    import random
+
+    def reference(t1, d1, t2, d2):
+        tr = difflib.SequenceMatcher(None, t1.lower(), t2.lower()).ratio()
+        lr = min(len(d1), len(d2)) / max(1, max(len(d1), len(d2)))
+        dr = difflib.SequenceMatcher(None, d1, d2).ratio() if lr >= 0.75 else 0.0
+        return (tr >= 0.85 and dr >= 0.75) or (tr >= 0.60 and dr >= 0.90)
+
+    rng = random.Random(4)
+    words = "build backend services apis data pipelines remote team python go react".split()
+    titles = ["Backend Engineer", "Senior Backend Engineer", "Frontend Engineer", "Data Engineer",
+              "Backend Engineer II", "Account Executive"]
+    for _ in range(300):
+        d1 = " ".join(rng.choice(words) for _ in range(rng.randint(20, 60)))
+        d2 = d1 if rng.random() < 0.3 else " ".join(rng.choice(words) for _ in range(rng.randint(20, 60)))
+        t1, t2 = rng.choice(titles), rng.choice(titles)
+        assert dedupe._is_fuzzy_duplicate(t1, d1, t2, d2) == reference(t1, d1, t2, d2)

@@ -74,6 +74,10 @@ _LIFECYCLE_COLUMNS = {
     "app_note": "TEXT",
     "app_updated_at": "TEXT",
     "applied_at": "TEXT",
+    # Which scorer produced `score`: "llm:<model>" or "decision:<qhash>".
+    "scorer_version": "TEXT",
+    # Decision scorer only: the typed answers behind the score (JSON).
+    "answers": "TEXT",
 }
 
 NEW = "new"
@@ -141,14 +145,22 @@ def known_req_ids(conn: sqlite3.Connection, source: str) -> set[str]:
 
 def _is_fuzzy_duplicate(p1_title: str, p1_desc: str, p2_title: str, p2_desc: str) -> bool:
     title_ratio = difflib.SequenceMatcher(None, p1_title.lower(), p2_title.lower()).ratio()
+    # Both duplicate rules below need title_ratio >= 0.60; skip the costly
+    # description comparison otherwise. Without this, a first scan of one
+    # mid-size board spent minutes in difflib.
+    if title_ratio < 0.60:
+        return False
 
     # Fast length heuristic: if lengths differ by >25%, desc_ratio cannot exceed 75%
     len_ratio = min(len(p1_desc), len(p2_desc)) / max(1, max(len(p1_desc), len(p2_desc)))
 
     desc_ratio = 0.0
-    if len_ratio >= 0.75:
+    matcher = difflib.SequenceMatcher(None, p1_desc, p2_desc)
+    # quick_ratio() is a cheap upper bound on ratio(), so this skip never
+    # changes the result.
+    if len_ratio >= 0.75 and matcher.quick_ratio() >= 0.75:
         # Only compute expensive difflib if lengths are somewhat close
-        desc_ratio = difflib.SequenceMatcher(None, p1_desc, p2_desc).ratio()
+        desc_ratio = matcher.ratio()
 
         # Log edge cases (high description similarity, but title might be borderline)
         if desc_ratio >= 0.90:

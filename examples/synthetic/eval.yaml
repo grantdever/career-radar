@@ -1,0 +1,23 @@
+# Synthetic demo eval: zero-cost (mock transport), runs end to end.
+#   career-radar eval freeze examples/synthetic   (writes LOCK.yaml)
+#   career-radar eval run examples/synthetic
+#   career-radar eval report examples/synthetic --sweep
+# labels.jsonl ships pre-filled from the generator, so `label` is not needed
+# here; on a real eval it is how you record verdicts, blind.
+name: synthetic-backend-engineer
+pool: pool.jsonl
+criteria: criteria.md
+contestants:
+  - name: full-posting
+    scorer: decision
+    config: ../decision.backend-engineer.yaml
+    transport: {kind: mock}
+    cutoff: 8
+  - name: titles-only
+    scorer: decision
+    config: decision.titles-only.yaml
+    transport: {kind: mock}
+    cutoff: 8
+primary_metric: f1
+decision_rule: {min_gap: 0.10, min_winner_recall: 0.80}
+stopping_rule: {min_positives: 15, extra_batch: 150}

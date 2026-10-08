@@ -222,6 +222,8 @@ def score_unscored(
     if not rows:
         logger.info("Nothing to score.")
         return 0, 0
+    from career_radar.config import load_model
+    model_name = load_model(config_dir=config_dir)
     logger.info("Scoring %d postings in batches of %d (%d calibration examples)",
                 len(rows), BATCH_SIZE, len(calibration))
     today = date.today().isoformat()
@@ -256,6 +258,9 @@ def score_unscored(
                     continue
                 score, rationale, flags = results[key]
                 dedupe.record_score(conn, row["source"], key, score, rationale, flags, today)
+                conn.execute(
+                    "UPDATE postings SET scorer_version = ? WHERE source = ? AND req_id = ?",
+                    (f"llm:{model_name}", row["source"], key))
                 scored += 1
 
             conn.commit()
